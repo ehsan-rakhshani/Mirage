@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Mirage.Api.Common;
+using Mirage.Api.Infrastructure.Services.Endpoint.Dto;
 using System.Reflection;
 
-namespace Mirage.Api.Infrastructure.Services;
+namespace Mirage.Api.Infrastructure.Services.Endpoint;
 
 public class EndPointsService
 {
@@ -14,7 +16,7 @@ public class EndPointsService
         _logger = logger;
     }
 
-    public async Task GetList()
+    public async Task<IEnumerable<MyRoute>> GetList()
     {
         await Task.Delay(2000);
         var result = new List<MyRoute>();
@@ -37,7 +39,6 @@ public class EndPointsService
 
                 _logger.LogInformation($"Found Route: {route} - Methods: {string.Join(", ", httpMethods)}");
 
-                // دریافت متد کنترلر مربوطه
                 var controllerActionDescriptor = endpoint.Metadata.GetMetadata<Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor>();
 
                 if (controllerActionDescriptor == null)
@@ -47,14 +48,13 @@ public class EndPointsService
                 }
 
                 var methodInfo = controllerActionDescriptor.MethodInfo;
-                var returnType = GetReturnType(methodInfo.ReturnType); // استخراج نوع خروجی
-
+                var returnType = GetReturnType(methodInfo.ReturnType);
                 var parameters = methodInfo.GetParameters()
                     .Select(param => new ParameterDetail
                     {
                         Name = param.Name ?? "UNKNOWN",
-                        Type = param.ParameterType.Name,
-                        BindingSource = GetBindingSource(param)
+                        Type = param.ParameterType,
+                        ModelBinding = GetBindingSource(param)
                     })
                     .ToList();
 
@@ -62,30 +62,16 @@ public class EndPointsService
             }
         }
 
-        // نمایش خروجی در کنسول
-        foreach (var route in result)
-        {
-            Console.WriteLine($"Route: {route.Route}");
-            Console.WriteLine($"Methods: {string.Join(", ", route.HttpMethods)}");
-            Console.WriteLine($"Return Type: {route.ReturnType}");
-            Console.WriteLine("Parameters:");
-            foreach (var param in route.Parameters)
-            {
-                Console.WriteLine($"  - {param.Name}: {param.Type} (Binding: {param.BindingSource})");
-            }
-            Console.WriteLine(new string('-', 50));
-        }
+        return result;
     }
 
     private string GetReturnType(Type returnType)
     {
-        // بررسی اینکه آیا نوع خروجی `Task<T>` است
         if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
         {
             return $"Task<{returnType.GetGenericArguments()[0].Name}>";
         }
 
-        // بررسی اینکه آیا نوع خروجی `ActionResult<T>` است
         if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(ActionResult<>))
         {
             return $"ActionResult<{returnType.GetGenericArguments()[0].Name}>";
@@ -94,23 +80,14 @@ public class EndPointsService
         return returnType.Name;
     }
 
-    private string GetBindingSource(ParameterInfo parameter)
+    private ModelBindingType GetBindingSource(ParameterInfo parameter)
     {
         var attributes = parameter.GetCustomAttributes();
-        if (attributes.OfType<FromQueryAttribute>().Any()) return "Query";
-        if (attributes.OfType<FromBodyAttribute>().Any()) return "Body";
-        if (attributes.OfType<FromRouteAttribute>().Any()) return "Route";
-        if (attributes.OfType<FromHeaderAttribute>().Any()) return "Header";
-        if (attributes.OfType<FromFormAttribute>().Any()) return "Form";
-        return "Default";
+        if (attributes.OfType<FromQueryAttribute>().Any()) return ModelBindingType.Query;
+        if (attributes.OfType<FromBodyAttribute>().Any()) return ModelBindingType.Body;
+        if (attributes.OfType<FromRouteAttribute>().Any()) return ModelBindingType.Body;
+        if (attributes.OfType<FromHeaderAttribute>().Any()) return ModelBindingType.Header;
+        if (attributes.OfType<FromFormAttribute>().Any()) return ModelBindingType.Form;
+        return ModelBindingType.UNKOWN;
     }
-}
-
-public record MyRoute(string Route, IEnumerable<string> HttpMethods, string ReturnType, List<ParameterDetail> Parameters);
-
-public class ParameterDetail
-{
-    public string Name { get; set; } = "";
-    public string Type { get; set; } = "";
-    public string BindingSource { get; set; } = "";
 }

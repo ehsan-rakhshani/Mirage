@@ -1,4 +1,6 @@
-using Mirage.Api.Infrastructure.Services;
+using Mirage.Api.Infrastructure.Services.Endpoint;
+using Mirage.Api.Infrastructure.Services.MockServer;
+using Mirage.Api.Infrastructure.Services.ObjectGenerator;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +11,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<EndPointsService>();
+builder.Services.AddSingleton<FakerService>();
+builder.Services.AddSingleton<MockServerService>();
 
 var app = builder.Build();
 
@@ -25,12 +29,10 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-
-
 _ = Task.Run(async () =>
 {
-    var wireMockService = app.Services.GetRequiredService<EndPointsService>();
-    await wireMockService.GetList();
+    var wireMockService = app.Services.GetRequiredService<MockServerService>();
+    await wireMockService.ConfigServer();
 });
 
 app.Run();
