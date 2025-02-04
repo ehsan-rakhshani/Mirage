@@ -10,7 +10,7 @@ public class OwnerController : ControllerBase
     [HttpGet("{id}")]
     public ActionResult<Owner> GetOwner(Guid id)
     {
-        var owner = OwnerFakeObject.Owners.Find(x => x.Id == id);
+        var owner = OwnerDataSource.Owners.Find(x => x.Id == id);
         if (owner == null)
         {
             return NotFound();
@@ -21,7 +21,7 @@ public class OwnerController : ControllerBase
     [HttpGet]
     public ActionResult<IEnumerable<Owner>> GetOwners([FromQuery] int skip, [FromQuery] int take)
     {
-        return OwnerFakeObject.Owners.Skip(skip).Take(take).ToList();
+        return OwnerDataSource.Owners.Skip(skip).Take(take).ToList();
     }
 
     [HttpPost]
@@ -29,7 +29,7 @@ public class OwnerController : ControllerBase
     {
         try
         {
-            OwnerFakeObject.Owners.Add(request);
+            OwnerDataSource.Owners.Add(request);
             return Ok(true);
         }
         catch (Exception)
@@ -43,7 +43,7 @@ public class OwnerController : ControllerBase
     {
         try
         {
-            var owner = OwnerFakeObject.Owners.Find(x => x.Id == id);
+            var owner = OwnerDataSource.Owners.Find(x => x.Id == id);
             if (owner == null)
             {
                 return NotFound(false);
@@ -64,12 +64,12 @@ public class OwnerController : ControllerBase
     {
         try
         {
-            var owner = OwnerFakeObject.Owners.Find(x => x.Id == id);
+            var owner = OwnerDataSource.Owners.Find(x => x.Id == id);
             if (owner == null)
             {
                 return NotFound(false);
             }
-            OwnerFakeObject.Owners.Remove(owner);
+            OwnerDataSource.Owners.Remove(owner);
             return Ok(true);
         }
         catch (Exception)
@@ -79,7 +79,7 @@ public class OwnerController : ControllerBase
     }
 }
 
-public static class OwnerFakeObject
+public static class OwnerDataSource
 {
     public static List<Owner> Owners = new List<Owner>
     {
