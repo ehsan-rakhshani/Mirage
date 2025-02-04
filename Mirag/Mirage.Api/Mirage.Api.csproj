@@ -12,8 +12,4 @@
     <PackageReference Include="WireMock.Net" Version="1.7.1" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Infrastructure\Services\" />
-  </ItemGroup>
-
 </Project>
