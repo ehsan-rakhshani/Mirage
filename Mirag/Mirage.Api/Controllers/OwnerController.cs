@@ -7,76 +7,83 @@ namespace Mirage.Api.Controllers;
 [Route("api/owners")]
 public class OwnerController : ControllerBase
 {
-    [HttpGet("{id}")]
-    public ActionResult<Owner> GetOwner(Guid id)
-    {
-        var owner = OwnerDataSource.Owners.Find(x => x.Id == id);
-        if (owner == null)
-        {
-            return NotFound();
-        }
-        return owner;
-    }
+    //[HttpGet("{id}")]
+    //public ActionResult<Owner> GetOwner(Guid id)
+    //{
+    //    var owner = OwnerDataSource.Owners.Find(x => x.Id == id);
+    //    if (owner == null)
+    //    {
+    //        return NotFound();
+    //    }
+    //    return owner;
+    //}
+
+    //[HttpGet]
+    //public ActionResult<IEnumerable<Owner>> GetOwners([FromQuery] int skip, [FromQuery] int take)
+    //{
+    //    return OwnerDataSource.Owners.Skip(skip).Take(take).ToList();
+    //}
 
     [HttpGet]
-    public ActionResult<IEnumerable<Owner>> GetOwners([FromQuery] int skip, [FromQuery] int take)
+    [Route("AllGetOwners")]
+    public IEnumerable<Owner> AllGetOwners()
     {
-        return OwnerDataSource.Owners.Skip(skip).Take(take).ToList();
+        return OwnerDataSource.Owners;
     }
 
-    [HttpPost]
-    public ActionResult<bool> PostOwner([FromBody] Owner request)
-    {
-        try
-        {
-            OwnerDataSource.Owners.Add(request);
-            return Ok(true);
-        }
-        catch (Exception)
-        {
-            return BadRequest(false);
-        }
-    }
+    //[HttpPost]
+    //public ActionResult<bool> PostOwner([FromBody] Owner request)
+    //{
+    //    try
+    //    {
+    //        OwnerDataSource.Owners.Add(request);
+    //        return Ok(true);
+    //    }
+    //    catch (Exception)
+    //    {
+    //        return BadRequest(false);
+    //    }
+    //}
 
-    [HttpPut("{id}")]
-    public ActionResult<bool> PutOwner([FromRoute] Guid id, [FromBody] Owner request)
-    {
-        try
-        {
-            var owner = OwnerDataSource.Owners.Find(x => x.Id == id);
-            if (owner == null)
-            {
-                return NotFound(false);
-            }
-            owner.FirstName = request.FirstName;
-            owner.LastName = request.LastName;
-            owner.Mobile = request.Mobile;
-            return Ok(true);
-        }
-        catch (Exception)
-        {
-            return BadRequest(false);
-        }
-    }
+    //[HttpPut("{id}")]
+    //public ActionResult<bool> PutOwner([FromRoute] Guid id, [FromBody] Owner request)
+    //{
+    //    try
+    //    {
+    //        var owner = OwnerDataSource.Owners.Find(x => x.Id == id);
+    //        if (owner == null)
+    //        {
+    //            return NotFound(false);
+    //        }
+    //        owner.FirstName = request.FirstName;
+    //        owner.LastName = request.LastName;
+    //        owner.Mobile = request.Mobile;
+    //        return Ok(true);
+    //    }
+    //    catch (Exception)
+    //    {
+    //        return BadRequest(false);
+    //    }
+    //}
 
-    [HttpDelete("{id}")]
-    public ActionResult<bool> DeleteOwner([FromRoute] Guid id)
-    {
-        try
-        {
-            var owner = OwnerDataSource.Owners.Find(x => x.Id == id);
-            if (owner == null)
-            {
-                return NotFound(false);
-            }
-            OwnerDataSource.Owners.Remove(owner);
-            return Ok(true);
-        }
-        catch (Exception)
-        {
-            return BadRequest(false);
-        }
-    }
+    //[HttpDelete("{id}")]
+    //public ActionResult<bool> DeleteOwner([FromRoute] Guid id)
+    //{
+    //    try
+    //    {
+    //        var owner = OwnerDataSource.Owners.Find(x => x.Id == id);
+    //        if (owner == null)
+    //        {
+    //            return NotFound(false);
+    //        }
+    //        OwnerDataSource.Owners.Remove(owner);
+    //        return Ok(true);
+    //    }
+    //    catch (Exception)
+    //    {
+    //        return BadRequest(false);
+    //    }
+    //}
 }
 
 public static class OwnerDataSource

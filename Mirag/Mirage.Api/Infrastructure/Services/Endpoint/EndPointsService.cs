@@ -3,91 +3,120 @@ using Mirage.Api.Common;
 using Mirage.Api.Infrastructure.Services.Endpoint.Dto;
 using System.Reflection;
 
-namespace Mirage.Api.Infrastructure.Services.Endpoint;
-
-public class EndPointsService
+namespace Mirage.Api.Infrastructure.Services.Endpoint
 {
-    private readonly IEnumerable<EndpointDataSource> _endpointSources;
-    private readonly ILogger<EndPointsService> _logger;
-
-    public EndPointsService(IEnumerable<EndpointDataSource> endpointSources, ILogger<EndPointsService> logger)
+    public class EndPointsService
     {
-        _endpointSources = endpointSources;
-        _logger = logger;
-    }
+        private readonly IEnumerable<EndpointDataSource> _endpointSources;
+        private readonly ILogger<EndPointsService> _logger;
 
-    public async Task<IEnumerable<MyRoute>> GetList()
-    {
-        await Task.Delay(2000);
-        var result = new List<MyRoute>();
-
-        foreach (var item in _endpointSources)
+        public EndPointsService(IEnumerable<EndpointDataSource> endpointSources, ILogger<EndPointsService> logger)
         {
-            _logger.LogInformation($"Processing EndpointDataSource: {item.GetType().Name}");
+            _endpointSources = endpointSources;
+            _logger = logger;
+        }
 
-            foreach (var endpoint in item.Endpoints)
+        public async Task<IEnumerable<MyRoute>> GetList()
+        {
+            await Task.Delay(2000);
+            var result = new List<MyRoute>();
+
+            foreach (var item in _endpointSources)
             {
-                if (endpoint is not RouteEndpoint routeEndpoint)
+                _logger.LogInformation($"Processing EndpointDataSource: {item.GetType().Name}");
+
+                foreach (var endpoint in item.Endpoints)
                 {
-                    _logger.LogWarning("Skipping non-RouteEndpoint.");
-                    continue;
-                }
-
-                var httpVerb = endpoint.Metadata.GetMetadata<HttpMethodMetadata>();
-                var httpMethods = httpVerb?.HttpMethods ?? new List<string> { "UNKNOWN" };
-                var route = routeEndpoint.RoutePattern.RawText ?? "UNKNOWN";
-
-                _logger.LogInformation($"Found Route: {route} - Methods: {string.Join(", ", httpMethods)}");
-
-                var controllerActionDescriptor = endpoint.Metadata.GetMetadata<Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor>();
-
-                if (controllerActionDescriptor == null)
-                {
-                    _logger.LogWarning($"ControllerActionDescriptor not found for route: {route}");
-                    continue;
-                }
-
-                var methodInfo = controllerActionDescriptor.MethodInfo;
-                var returnType = GetReturnType(methodInfo.ReturnType);
-                var parameters = methodInfo.GetParameters()
-                    .Select(param => new ParameterDetail
+                    if (endpoint is not RouteEndpoint routeEndpoint)
                     {
-                        Name = param.Name ?? "UNKNOWN",
-                        Type = param.ParameterType,
-                        ModelBinding = GetBindingSource(param)
-                    })
-                    .ToList();
+                        continue;
+                    }
 
-                result.Add(new MyRoute(route, httpMethods, returnType, parameters));
+                    var httpVerb = endpoint.Metadata.GetMetadata<HttpMethodMetadata>();
+                    var httpMethods = httpVerb?.HttpMethods ?? new List<string> { "UNKNOWN" };
+                    var route = routeEndpoint.RoutePattern.RawText ?? "UNKNOWN";
+
+                    var controllerActionDescriptor = endpoint.Metadata.GetMetadata<Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor>();
+
+                    if (controllerActionDescriptor == null)
+                    {
+                        continue;
+                    }
+
+                    var methodInfo = controllerActionDescriptor.MethodInfo;
+                    var returnType = GetReturnType(methodInfo.ReturnType);
+                    var returnTypename = GetReturnTypeName(methodInfo.ReturnType);
+                    var parameters = methodInfo.GetParameters()
+                        .Select(param => new ParameterDetail
+                        {
+                            Name = param.Name ?? "UNKNOWN",
+                            Type = param.ParameterType,
+                            ModelBinding = GetBindingSource(param)
+                        })
+                        .ToList();
+
+                    result.Add(new MyRoute(route, httpMethods, returnType, returnTypename, parameters));
+                }
             }
+
+            return result;
         }
 
-        return result;
-    }
-
-    private string GetReturnType(Type returnType)
-    {
-        if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
+        private Type GetReturnType(Type returnType)
         {
-            return $"Task<{returnType.GetGenericArguments()[0].Name}>";
-        }
+            if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
+            {
+                return returnType.GetGenericArguments()[0];
+            }
 
-        if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(ActionResult<>))
+            if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(ActionResult<>))
+            {
+                return returnType.GetGenericArguments()[0];
+            }
+
+            return returnType;
+        }
+        private string GetReturnTypeName(Type returnType)
         {
-            return $"ActionResult<{returnType.GetGenericArguments()[0].Name}>";
+            if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
+            {
+                return $"Task<{GetNameCompletely(returnType.GetGenericArguments()[0])}>";
+            }
+
+            if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(ActionResult<>))
+            {
+                return $"ActionResult<{GetNameCompletely(returnType.GetGenericArguments()[0])}>";
+            }
+
+            return GetNameCompletely(returnType);
         }
 
-        return returnType.Name;
-    }
+        private string GetNameCompletely(Type type)
+        {
+            if (type.IsGenericType)
+            {
+                var genericTypeName = type.GetGenericTypeDefinition().Name;
+                int index = genericTypeName.IndexOf('`');
+                if (index > 0)
+                {
+                    genericTypeName = genericTypeName.Substring(0, index);
+                }
 
-    private ModelBindingType GetBindingSource(ParameterInfo parameter)
-    {
-        var attributes = parameter.GetCustomAttributes();
-        if (attributes.OfType<FromQueryAttribute>().Any()) return ModelBindingType.Query;
-        if (attributes.OfType<FromBodyAttribute>().Any()) return ModelBindingType.Body;
-        if (attributes.OfType<FromRouteAttribute>().Any()) return ModelBindingType.Body;
-        if (attributes.OfType<FromHeaderAttribute>().Any()) return ModelBindingType.Header;
-        if (attributes.OfType<FromFormAttribute>().Any()) return ModelBindingType.Form;
-        return ModelBindingType.UNKOWN;
+                string genericArgs = string.Join(", ", type.GetGenericArguments().Select(t => GetNameCompletely(t)));
+                return $"{genericTypeName}<{genericArgs}>";
+            }
+            return type.Name;
+        }
+
+        private ModelBindingType GetBindingSource(ParameterInfo parameter)
+        {
+            var attributes = parameter.GetCustomAttributes();
+            if (attributes.OfType<FromQueryAttribute>().Any()) return ModelBindingType.Query;
+            if (attributes.OfType<FromBodyAttribute>().Any()) return ModelBindingType.Body;
+            if (attributes.OfType<FromRouteAttribute>().Any()) return ModelBindingType.Body;
+            if (attributes.OfType<FromHeaderAttribute>().Any()) return ModelBindingType.Header;
+            if (attributes.OfType<FromFormAttribute>().Any()) return ModelBindingType.Form;
+            return ModelBindingType.UNKOWN;
+        }
     }
 }
