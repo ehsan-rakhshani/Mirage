@@ -1,6 +1,6 @@
 ﻿using Mirage.Api.Infrastructure.Services.Endpoint.Dto;
 
-public class MyRoute
+public class MyRouteDto
 {
     public string Route { get; }
     public IEnumerable<string> HttpMethods { get; }
@@ -8,7 +8,7 @@ public class MyRoute
     public string ReturnTypeName { get; }
     public List<ParameterDetail> Parameters { get; }
 
-    public MyRoute(string route, IEnumerable<string> httpMethods, Type returnType, string returnTypeName, List<ParameterDetail> parameters)
+    public MyRouteDto(string route, IEnumerable<string> httpMethods, Type returnType, string returnTypeName, List<ParameterDetail> parameters)
     {
         Route = route;
         HttpMethods = httpMethods;

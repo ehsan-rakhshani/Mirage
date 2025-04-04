@@ -7,16 +7,16 @@ namespace Mirage.Api.Controllers;
 [Route("api/owners")]
 public class OwnerController : ControllerBase
 {
-    //[HttpGet("{id}")]
-    //public ActionResult<Owner> GetOwner(Guid id)
-    //{
-    //    var owner = OwnerDataSource.Owners.Find(x => x.Id == id);
-    //    if (owner == null)
-    //    {
-    //        return NotFound();
-    //    }
-    //    return owner;
-    //}
+    [HttpGet("{id}")]
+    public ActionResult<Owner> GetOwner(Guid id)
+    {
+        var owner = OwnerDataSource.Owners.Find(x => x.Id == id);
+        if (owner == null)
+        {
+            return NotFound();
+        }
+        return owner;
+    }
 
     //[HttpGet]
     //public ActionResult<IEnumerable<Owner>> GetOwners([FromQuery] int skip, [FromQuery] int take)

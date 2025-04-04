@@ -8,7 +8,7 @@ namespace Mirage.Api.Infrastructure.Services.ObjectGenerator;
 
 public class FakerService
 {
-    private readonly Fixture _fixture;
+    private readonly Fixture _fixture; 
     private readonly Random _random;
 
     public FakerService()
