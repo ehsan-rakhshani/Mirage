@@ -92,14 +92,14 @@ namespace Mirage.Api.Infrastructure.Services.MockServer
 
                     var response = Response.Create()
                                            .WithStatusCode(200)
-                                           .WithHeader("Content-Type", "json")
+                                           .WithHeader("Content-Type", "application/json")
                                            .WithBodyAsJson(responcsObj, Encoding.UTF8, true);
 
                     wireMockServer.Given(request)
                                   .RespondWith(response);
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
             }

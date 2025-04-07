@@ -7,7 +7,7 @@ namespace Mirage.Api.Controllers;
 [Route("api/owners")]
 public class OwnerController : ControllerBase
 {
-    [HttpGet("{id}/test")]
+    [HttpGet("{id}")]
     public ActionResult<Owner> GetOwner([FromRoute] Guid id)
     {
         var owner = OwnerDataSource.Owners.Find(x => x.Id == id);

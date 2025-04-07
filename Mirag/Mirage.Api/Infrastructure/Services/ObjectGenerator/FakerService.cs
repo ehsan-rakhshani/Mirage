@@ -63,9 +63,7 @@ public static class FakerService
             }
         }
 
-        // مدیریت کلاس‌ها و رکوردها (Custom Classes/Records)
         object instance = null;
-        // ابتدا سعی می‌کنیم از سازنده بدون پارامتر استفاده کنیم
         ConstructorInfo ctor = type.GetConstructor(Type.EmptyTypes);
         if (ctor != null)
         {
