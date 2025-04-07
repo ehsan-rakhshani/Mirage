@@ -85,7 +85,7 @@ public static class FakerService
         }
 
         if (instance == null)
-            return null;
+            return string.Empty;
 
         // مقداردهی به خواص عمومی (Properties) که قابلیت set دارند
         var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
