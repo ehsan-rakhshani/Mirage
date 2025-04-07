@@ -6,11 +6,13 @@ public class Owner
     public string FirstName { get; set; }
     public string LastName { get; set; }
     public string Mobile { get; set; }
-    public Owner(Guid id, string firstName, string lastName, string mobile)
+
+    public Owner()
     {
-        Id = id;
-        FirstName = firstName;
-        LastName = lastName;
-        Mobile = mobile;
+        
     }
-}
+    public Owner(Guid Id, string FirstName, string LastName, string Mobile)
+    {
+        
+    }
+};

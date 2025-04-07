@@ -1,6 +1,7 @@
 ﻿using Mirage.Api.Common;
 using Mirage.Api.Infrastructure.Services.Endpoint;
 using Mirage.Api.Infrastructure.Services.ObjectGenerator;
+using System.Text;
 using System.Text.RegularExpressions;
 using WireMock.Matchers;
 using WireMock.RequestBuilders;
@@ -13,100 +14,166 @@ namespace Mirage.Api.Infrastructure.Services.MockServer
     public class MockServerService
     {
         private readonly EndPointsService _endPointsService;
-        private readonly FakerService _fakerService;
         private readonly ILogger<EndPointsService> _logger;
 
-        public MockServerService(EndPointsService endPointsService, FakerService fakerService, ILogger<EndPointsService> logger)
+        public MockServerService(EndPointsService endPointsService, ILogger<EndPointsService> logger)
         {
             _endPointsService = endPointsService;
             _logger = logger;
-            _fakerService = fakerService;
         }
 
         public async Task ConfigServer()
         {
+
             var routes = await _endPointsService.GetList();
 
             if (!routes.Any())
             {
-                _logger.LogWarning("هیچ مسیر (route) ای یافت نشد.");
                 return;
             }
 
-            // استارت WireMock Server در پورت 9090
             var wireMockServer = WireMockServer.Start(new WireMockServerSettings
             {
                 Port = 9090,
                 StartAdminInterface = true,
             });
 
-            _logger.LogInformation("WireMock Server در پورت 9090 اجرای خود را آغاز کرد.");
+            //        wireMockServer
+            //.Given(
+            //    Request.Create()
+            //        .WithPath("/api/owners/*/test")
+            //        .UsingGet()
+            //)
+            //.RespondWith(
+            //    Response.Create()
+            //        .WithStatusCode(200)
+            //        .WithHeader("Content-Type", "application/json")
+            //        .WithBody(@"
+            //            {
+            //                ""id"": ""afe6cf9a-eca3-496e-a1a9-83fee0132f05"",
+            //                ""firstName"": ""Ehsan"",
+            //                ""lastName"": ""Rakhshani"",
+            //                ""phone"": ""09365957533""
+            //            }
+            //        ")
+            //);
 
-            var requests = Request.Create()
-                                  .WithPath("/api/ownerss")
-                                  .WithParam("id", new WildcardMatcher("*"))
-                                  .UsingGet();
+            //        // 2️⃣ GET api/owners?id=GUID (query string)
+            //        wireMockServer
+            //            .Given(
+            //                Request.Create()
+            //                    .WithPath("/api/owners")
+            //                    .WithParam("id", new RegexMatcher(".*")) // هر GUIDی قبول میشه
+            //                    .UsingGet()
+            //            )
+            //            .RespondWith(
+            //                Response.Create()
+            //                    .WithStatusCode(200)
+            //                    .WithHeader("Content-Type", "application/json")
+            //                    .WithBody(@"
+            //            {
+            //                ""id"": ""b72ee075-d8f2-4ca5-96d8-a8d687aa2ea6"",
+            //                ""firstName"": ""Mohammad"",
+            //                ""lastName"": ""Asghar"",
+            //                ""phone"": ""09365957534""
+            //            }
+            //        ")
+            //            );
 
-            var responses = Response.Create()
-                                   .WithStatusCode(200)
-                                   .WithHeader("Content-Type", "text/plain")
-                                   .WithBody("This is a stub for /api/owners with query id.");
+            //        // 3️⃣ GET api/owners/AllGetOwners (لیست کامل)
+            //        wireMockServer
+            //            .Given(
+            //                Request.Create()
+            //                    .WithPath("/api/owners/AllGetOwners")
+            //                    .UsingGet()
+            //            )
+            //            .RespondWith(
+            //                Response.Create()
+            //                    .WithStatusCode(200)
+            //                    .WithHeader("Content-Type", "application/json")
+            //                    .WithBody(@"
+            //            [
+            //                {
+            //                    ""id"": ""afe6cf9a-eca3-496e-a1a9-83fee0132f05"",
+            //                    ""firstName"": ""Ehsan"",
+            //                    ""lastName"": ""Rakhshani"",
+            //                    ""phone"": ""09365957533""
+            //                },
+            //                {
+            //                    ""id"": ""b72ee075-d8f2-4ca5-96d8-a8d687aa2ea6"",
+            //                    ""firstName"": ""Mohammad"",
+            //                    ""lastName"": ""Asghar"",
+            //                    ""phone"": ""09365957534""
+            //                },
+            //                {
+            //                    ""id"": ""dfe891ff-331b-490e-b407-ab0980f89bbc"",
+            //                    ""firstName"": ""Akbar"",
+            //                    ""lastName"": ""Ahmad"",
+            //                    ""phone"": ""09345957535""
+            //                }
+            //            ]
+            //        ")
+            //            );
 
-            wireMockServer.Given(requests)
-                          .RespondWith(responses);
+            //        Console.WriteLine("✅ Mock server is running on http://localhost:5000");
+            //        Console.ReadLine();
 
             foreach (var rout in routes)
             {
-                // فرض: rout.Route مثلا "api/owners" باشد (بدون پارامتر در مسیر)
                 var uri = rout.Route;
 
-                // اگر بخواهید همچنان پشتیبانی از مسیرهایی مانند api/owners/{id} را داشته باشید:
-                // رشته‌هایی داخل آکلاد را با "*" جایگزین می‌کنیم، در صورت وجود.
                 string pattern = @"\{[^}]*\}";
-                uri = Regex.Replace(uri, pattern, "*");
+                uri = Regex.Replace($"/{uri}", pattern, "*");
 
-                _logger.LogInformation($"مسیر نهایی برای Mock: /{uri}");
-
-                // ایجاد request با استفاده از WildcardMatcher برای مسیر
                 var request = Request.Create()
-                                     .WithPath(new WildcardMatcher($"/{uri}"))
-                                     .UsingGet();
+                                     .WithPath(uri)
+                                     .UsingMethod(rout.HttpMethods.First());
 
-                // بررسی پارامترها:
                 foreach (var parameter in rout.Parameters)
                 {
-                    // در صورتیکه پارامتر از نوع Query باشد:
-                    if (parameter.ModelBinding.ToString().Equals("Query", StringComparison.InvariantCultureIgnoreCase))
+                    if (parameter.ModelBinding.ToString().Equals(ModelBindingType.Query.ToString(), StringComparison.InvariantCultureIgnoreCase))
                     {
-                        // در صورت نیاز می‌توانید مقدار دقیق را هم چک کنید؛ مثلاً:
-                        // request.WithParam(parameter.Name, "1");
-                        // ولی اگر مقدار داینامیک است، استفاده از WildcardMatcher مفید است:
-                        request.WithParam(parameter.Name, new WildcardMatcher("*"));
+                        request.WithParam(parameter.Name, new RegexMatcher(".*"));
                     }
-                    // برای Header
-                    else if (parameter.ModelBinding.ToString().Equals("Header", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        request.WithHeader(parameter.Name);
-                    }
-                    // برای Body
-                    else if (parameter.ModelBinding.ToString().Equals("Body", StringComparison.InvariantCultureIgnoreCase))
+                    else
+                    if (parameter.ModelBinding.ToString().Equals(ModelBindingType.Body.ToString(), StringComparison.InvariantCultureIgnoreCase))
                     {
                         request.WithBody(parameter.Name);
                     }
-                    // برای پارامترهای مسیر نیازی به افزودن شرط جدا نیست.
+                    else
+                    if (parameter.ModelBinding.ToString().Equals(ModelBindingType.Route.ToString(), StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        request.WithPath(parameter.Name, "*");
+                    }
+                    else
+                    if (parameter.ModelBinding.ToString().Equals(ModelBindingType.Header.ToString(), StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        request.WithHeader(parameter.Name);
+                    }
+                    else
+                    {
+                        throw new NotImplementedException("");
+                    }
                 }
 
-                // ساخت پاسخ برای درخواست mock شده
-                string responcsObj = $"This is for test FOR http://localhost:9090/{rout.Route}.";
+                object responcsObj;
+               
+                if (string.IsNullOrEmpty(rout.ReturnTypeName))
+                {
+                    responcsObj = $"This is for test FOR http://localhost:9090/{rout.Route}. Son of Bitch.";
+                }
+                else
+                {
+                    responcsObj = FakerService.CreateMockInstance(rout.ReturnType);
+                }
+
                 var response = Response.Create()
                                        .WithStatusCode(200)
-                                       .WithHeader("Content-Type", "text/plain")
-                                       .WithBody(responcsObj);
+                                       .WithHeader("Content-Type", "json")
+                                       .WithBodyAsJson(responcsObj, Encoding.UTF8, true);
 
                 wireMockServer.Given(request)
                               .RespondWith(response);
-
-                _logger.LogInformation($"Stub برای مسیر /{uri} اضافه شد.");
             }
         }
     }

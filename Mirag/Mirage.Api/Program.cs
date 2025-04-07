@@ -8,7 +8,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<EndPointsService>();
-builder.Services.AddSingleton<FakerService>();
 builder.Services.AddSingleton<MockServerService>();
 
 var app = builder.Build();
