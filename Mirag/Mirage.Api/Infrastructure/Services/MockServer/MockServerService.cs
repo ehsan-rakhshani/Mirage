@@ -27,7 +27,6 @@ namespace Mirage.Api.Infrastructure.Services.MockServer
         {
             try
             {
-
                 var routes = await _endPointsService.GetList();
 
                 if (!routes.Any())
@@ -87,7 +86,22 @@ namespace Mirage.Api.Infrastructure.Services.MockServer
                     }
                     else
                     {
-                        responcsObj = FakerService.CreateMockInstance(route.ReturnType);
+                        if (route.SampleType is null)
+                        {
+                            responcsObj = FakerService.CreateMockInstance(route.ReturnType);
+
+                        }
+                        else
+                        if (typeof(MyAbstractClass).IsAssignableFrom(route.SampleType) && route.SampleType != typeof(MyAbstractClass))
+                       {
+                                var instancess = Activator.CreateInstance(route.SampleType) as MyAbstractClass;
+                                responcsObj = instancess.InstanceMethod();
+                            }
+                        else
+                        {
+                            responcsObj = FakerService.CreateMockInstance(route.ReturnType);
+
+                        }
                     }
 
                     var response = Response.Create()
@@ -104,7 +118,6 @@ namespace Mirage.Api.Infrastructure.Services.MockServer
                 _logger.LogError(ex.Message);
             }
         }
-
     }
 
     public static class WireMockExtension

@@ -1,17 +1,15 @@
-﻿using System;
+﻿using Mirage.Api.Infrastructure.Services.MockServer;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 
 namespace Mirage.Api.Infrastructure.Services.ObjectGenerator;
 public static class FakerService
 {
-    // حداکثر عمق بازگشتی برای جلوگیری از ایجاد نمونه‌های تو در تو بیش از حد
-    private const int MaxRecursionDepth = 3;
+    private const int MaxRecursionDepth = 30;
 
-    public static object CreateMockInstance(Type type, int currentDepth = 0)
+    public static object? CreateMockInstance(Type type, int currentDepth = 0)
     {
+
         if (currentDepth > MaxRecursionDepth)
             return null;
 
@@ -71,7 +69,6 @@ public static class FakerService
         }
         else
         {
-            // در صورتی که سازنده بدون پارامتر موجود نباشد، از سازنده‌ای با کمترین تعداد پارامتر استفاده می‌کنیم
             var ctors = type.GetConstructors().OrderBy(c => c.GetParameters().Length).ToArray();
             if (ctors.Any())
             {
@@ -85,7 +82,6 @@ public static class FakerService
         if (instance == null)
             return string.Empty;
 
-        // مقداردهی به خواص عمومی (Properties) که قابلیت set دارند
         var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(p => p.CanWrite);
         foreach (var prop in properties)
@@ -97,11 +93,10 @@ public static class FakerService
             }
             catch
             {
-                // در صورت خطا مقداردهی نادیده گرفته می‌شود
+                continue;
             }
         }
 
-        // مقداردهی به فیلدهای عمومی (Fields)
         var fields = type.GetFields(BindingFlags.Public | BindingFlags.Instance);
         foreach (var field in fields)
         {
@@ -112,7 +107,7 @@ public static class FakerService
             }
             catch
             {
-                // در صورت خطا مقداردهی نادیده گرفته می‌شود
+                continue;
             }
         }
 

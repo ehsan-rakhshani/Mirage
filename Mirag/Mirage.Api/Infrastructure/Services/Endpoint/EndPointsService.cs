@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Mirage.Api.Common;
+using Mirage.Api.Infrastructure.Attributes;
 using Mirage.Api.Infrastructure.Services.Endpoint.Dto;
 using System.Reflection;
 
@@ -44,6 +45,12 @@ public class EndPointsService
                 }
 
                 var methodInfo = controllerActionDescriptor.MethodInfo;
+                var sampleAttribute = methodInfo.GetCustomAttributes(typeof(SampleAttribute<>), false).FirstOrDefault();
+                Type sampleType = null;
+                if (sampleAttribute != null)
+                {
+                    sampleType = sampleAttribute.GetType().GetGenericArguments().FirstOrDefault();
+                }
                 var returnType = GetReturnType(methodInfo.ReturnType);
                 var returnTypename = GetReturnTypeName(methodInfo.ReturnType);
 
@@ -56,7 +63,7 @@ public class EndPointsService
                     })
                     .ToList();
 
-                result.Add(new MyRouteDto(route, httpMethods, returnType, returnTypename, parameters));
+                result.Add(new MyRouteDto(route, httpMethods, returnType, sampleType, returnTypename, parameters));
             }
         }
 

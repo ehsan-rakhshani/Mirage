@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Mirage.Api.Infrastructure.Attributes;
 using Mirage.Api.Models.DomainModels.Owner;
+using Mirage.Api.StaticSamples.Owners;
 
 namespace Mirage.Api.Controllers;
 
@@ -89,6 +91,19 @@ public class OwnerController : ControllerBase
             return BadRequest(false);
         }
     }
+
+    [HttpGet("{id}/static")]
+    [SampleAttribute<GetOwnerSample>]
+    public ActionResult<Owner> GetStatic([FromRoute] Guid id)
+    {
+        var owner = OwnerDataSource.Owners.Find(x => x.Id == id);
+        if (owner == null)
+        {
+            return NotFound();
+        }
+        return owner;
+    }
+
 }
 
 public static class OwnerDataSource
