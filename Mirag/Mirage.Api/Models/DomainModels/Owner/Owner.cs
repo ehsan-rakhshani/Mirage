@@ -11,8 +11,4 @@ public class Owner
     {
         
     }
-    public Owner(Guid Id, string FirstName, string LastName, string Mobile)
-    {
-        
-    }
 };
