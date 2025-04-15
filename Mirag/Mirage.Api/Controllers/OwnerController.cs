@@ -62,9 +62,9 @@ public class OwnerController : ControllerBase
             {
                 return NotFound(false);
             }
-            owner.FirstName = request.FirstName;
-            owner.LastName = request.LastName;
-            owner.Mobile = request.Mobile;
+            //owner.FirstName = request.FirstName;
+            //owner.LastName = request.LastName;
+            //owner.Mobile = request.Mobile;
             return Ok(true);
         }
         catch (Exception)
